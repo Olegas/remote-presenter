@@ -30,12 +30,35 @@
             }]
         });
 
+        pc.onnegotiationneeded = function() {
+            pc.createOffer().then(function (offer) {
+                return pc.setLocalDescription(offer);
+            })
+            .then(function () {
+                // send the offer to the other peer
+                ws.send({ type: 'dsp', 'sdp': pc.localDescription });
+            })
+            .catch(alert);
+        };
+
         ws.onmessage = function(msg) {
             var m = JSON.parse(msg.data);
             if (m.type == 'ice') {
                 pc.addIceCandidate(new RTCIceCandidate(m.ice));
             } else if (m.type == 'sdp') {
-                pc.setRemoteDescription(new RTCSessionDescription(m.sdp));
+                var desc = new RTCSessionDescription(m.sdp);
+
+                // if we get an offer, we need to reply with an answer
+                if (desc.type == "offer") {
+                    pc.setRemoteDescription(desc).then(function () {
+                        return pc.createAnswer();
+                    }).then(function (answer) {
+                        return pc.setLocalDescription(answer);
+                    }).then(function () {
+                        ws.send({ type: 'sdp', 'sdp': pc.localDescription });
+                    }).catch(alert);
+                } else
+                    pc.setRemoteDescription(desc).catch(alert);
             } else if (m.type == 'error') {
                 alert('Error: ' + m.message);
             }
