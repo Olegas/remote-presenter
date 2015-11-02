@@ -75,17 +75,6 @@
             } else {
                 video.src = stream;
             }
-
-            if (isCaller) {
-                pc.createOffer(gotDescription);
-            }  else {
-                pc.createAnswer(gotDescription, null, pc.remoteDescription);
-            }
-
-            function gotDescription(desc) {
-                pc.setLocalDescription(desc);
-                ws.send({ type: 'sdp', 'sdp': desc });
-            }
         }, function gumError(e){
             alert('getUserMedia error: ' + e);
         })
