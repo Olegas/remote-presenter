@@ -1,8 +1,35 @@
-<script src="/socket.io/socket.io.js"></script>
 <script>
-    var socket = io.connect('http://' + window.location.host);
-    socket.on('news', function (data) {
-        console.log(data);
-        socket.emit('my other event', { my: 'data' });
-    });
+
+    function beginAs(mode) {
+        var ws = new WebSocket('http://' + window.location.host);
+
+        if (mode == 'presenter') {
+            var id = prompt('Enter controller id');
+            ws.send({ type: mode, id: id });
+        } else {
+            ws.send({type: mode});
+        }
+        ws.onmessage = function(msg) {
+            var m = JSON.parse(msg);
+            if (m.type == 'id') {
+                document.getElementById('id').appendChild(document.createTextNode(m.id));
+            } else if (m.type == 'startSession') {
+                alert('starting session!');
+            } else if (m.type == 'error') {
+                alert('Error: ' + m.message);
+            }
+        }
+    }
+
+    document.body.addEventListener('click', function(e){
+        if (e.target.className == 'begin') {
+            beginAs(e.target.id);
+        }
+    }, false);
+
 </script>
+
+<button class="begin" id="presenter">Presenter</button>
+<button class="begin" id="controller">Controller</button>
+
+<div id="id"></div>
