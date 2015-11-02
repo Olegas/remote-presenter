@@ -44,7 +44,7 @@ wss.on('connection', function connection(ws) {
    ws.send = (function(o) {
       return function (data) {
          if (typeof data == 'object') {
-            return o.apply(this, JSON.stringify(data))
+            return o.call(this, JSON.stringify(data))
          } else {
             return o.apply(this, arguments);
          }
