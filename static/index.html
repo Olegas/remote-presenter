@@ -3,8 +3,59 @@
     <button class="begin" id="controller">Controller</button>
 
     <div id="id"></div>
+    <h2>Local</h2>
+    <video id="video" style="width: 640px; height: 480px;" autoplay></video>
+    <h2>Remote</h2>
+    <video id="videoRemote" style="width: 640px; height: 480px;" autoplay></video>
 </body>
 <script>
+
+    function establishRTC(ws, isCaller) {
+        var video = document.getElementById('video');
+        var remote = document.getElementById('videoRemote');
+        var pc = new RTCPeerConnection();
+
+        ws.onmessage = function(msg) {
+            var m = JSON.parse(msg.data);
+            if (m.type == 'ice') {
+                pc.addIceCandidate(new RTCIceCandidate(m.ice));
+            } else if (m.type == 'sdp') {
+                pc.setRemoteDescription(new RTCSessionDescription(m.sdp));
+            } else if (m.type == 'error') {
+                alert('Error: ' + m.message);
+            }
+        };
+
+        pc.onicecandidate = function (evt) {
+            ws.send({ type: 'ice', ice: evt.candidate });
+        };
+
+        // once remote stream arrives, show it in the remote video element
+        pc.onaddstream = function (evt) {
+            remote.src = URL.createObjectURL(evt.stream);
+        };
+
+        getUserMedia({ video: true, audio: true }, function gumSuccess(stream){
+            if (URL.createObjectURL) {
+                video.src = URL.createObjectURL(stream);
+            } else {
+                video.src = stream;
+            }
+
+            if (isCaller) {
+                pc.createOffer(gotDescription);
+            }  else {
+                pc.createAnswer(pc.remoteDescription, gotDescription);
+            }
+
+            function gotDescription(desc) {
+                pc.setLocalDescription(desc);
+                ws.send({ type: 'sdp', 'sdp': desc });
+            }
+        }, function gumError(e){
+            alert('getUserMedia error: ' + e);
+        })
+    }
 
     function beginAs(mode) {
         var ws = new WebSocket('ws://' + window.location.host);
@@ -31,7 +82,7 @@
                 if (m.type == 'id') {
                     document.getElementById('id').appendChild(document.createTextNode(m.id));
                 } else if (m.type == 'startSession') {
-                    alert('starting session!');
+                    establishRTC(this, mode == 'controller');
                 } else if (m.type == 'error') {
                     alert('Error: ' + m.message);
                 }
