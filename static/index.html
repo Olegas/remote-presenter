@@ -31,14 +31,10 @@
         });
 
         pc.onnegotiationneeded = function() {
-            pc.createOffer().then(function (offer) {
-                return pc.setLocalDescription(offer);
-            })
-            .then(function () {
-                // send the offer to the other peer
+            pc.createOffer(function (offer) {
+                pc.setLocalDescription(offer);
                 ws.send({ type: 'dsp', 'sdp': pc.localDescription });
-            })
-            .catch(alert);
+            }, alert);
         };
 
         ws.onmessage = function(msg) {
@@ -50,15 +46,15 @@
 
                 // if we get an offer, we need to reply with an answer
                 if (desc.type == "offer") {
-                    pc.setRemoteDescription(desc).then(function () {
-                        return pc.createAnswer();
-                    }).then(function (answer) {
-                        return pc.setLocalDescription(answer);
-                    }).then(function () {
-                        ws.send({ type: 'sdp', 'sdp': pc.localDescription });
-                    }).catch(alert);
-                } else
-                    pc.setRemoteDescription(desc).catch(alert);
+                    pc.setRemoteDescription(desc, function () {
+                        pc.createAnswer(function(ans){
+                            pc.setLocalDescription(ans);
+                            ws.send({ type: 'sdp', 'sdp': pc.localDescription });
+                        }, alert);
+                    }, alert);
+                } else {
+                    pc.setRemoteDescription(desc, null, alert);
+                }
             } else if (m.type == 'error') {
                 alert('Error: ' + m.message);
             }
