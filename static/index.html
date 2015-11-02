@@ -27,7 +27,7 @@
                 ws.send({type: mode});
             }
             ws.onmessage = function(msg) {
-                var m = JSON.parse(msg);
+                var m = JSON.parse(msg.data);
                 if (m.type == 'id') {
                     document.getElementById('id').appendChild(document.createTextNode(m.id));
                 } else if (m.type == 'startSession') {
