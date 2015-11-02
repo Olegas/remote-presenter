@@ -9,20 +9,22 @@
     function beginAs(mode) {
         var ws = new WebSocket('ws://' + window.location.host);
 
-        if (mode == 'presenter') {
-            var id = prompt('Enter controller id');
-            ws.send({ type: mode, id: id });
-        } else {
-            ws.send({type: mode});
-        }
-        ws.onmessage = function(msg) {
-            var m = JSON.parse(msg);
-            if (m.type == 'id') {
-                document.getElementById('id').appendChild(document.createTextNode(m.id));
-            } else if (m.type == 'startSession') {
-                alert('starting session!');
-            } else if (m.type == 'error') {
-                alert('Error: ' + m.message);
+        ws.onopen = function() {
+            if (mode == 'presenter') {
+                var id = prompt('Enter controller id');
+                ws.send({ type: mode, id: id });
+            } else {
+                ws.send({type: mode});
+            }
+            ws.onmessage = function(msg) {
+                var m = JSON.parse(msg);
+                if (m.type == 'id') {
+                    document.getElementById('id').appendChild(document.createTextNode(m.id));
+                } else if (m.type == 'startSession') {
+                    alert('starting session!');
+                } else if (m.type == 'error') {
+                    alert('Error: ' + m.message);
+                }
             }
         }
     }
@@ -30,6 +32,10 @@
     document.body.addEventListener('click', function(e){
         if (e.target.className == 'begin') {
             beginAs(e.target.id);
+        }
+        var btns = document.body.getElementsByTagName('button');
+        for(var i = 0, l = btns.length; i < l; i++) {
+            btns[i].disabled = true;
         }
     }, false);
 
