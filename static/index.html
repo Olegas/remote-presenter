@@ -29,6 +29,13 @@
                 'url': 'stun:stun.l.google.com:19302'
             }]
         });
+        var rmtIce = [];
+
+        function applyIce(pc) {
+            rmtIce.forEach(function(ice) {
+                pc.addIceCandidate(new RTCIceCandidate(ice));
+            });
+        }
 
         pc.onnegotiationneeded = function() {
             pc.createOffer(function (offer) {
@@ -43,7 +50,7 @@
             if (m.type == 'ice') {
                 console.log('Got remote ICE', m.ice);
                 if (m.ice) {
-                    pc.addIceCandidate(new RTCIceCandidate(m.ice));
+                    rmtIce.push(m.ice);
                 }
             } else if (m.type == 'sdp') {
                 var desc = new RTCSessionDescription(m.sdp);
@@ -56,10 +63,12 @@
                             pc.setLocalDescription(ans);
                             console.log('Sending answer', pc.localDescription);
                             ws.send({ type: 'sdp', 'sdp': pc.localDescription });
+                            applyIce(pc);
                         }, alert);
                     }, alert);
                 } else {
                     pc.setRemoteDescription(desc, null, alert);
+                    applyIce(pc);
                 }
             } else if (m.type == 'error') {
                 alert('Error: ' + m.message);
@@ -67,7 +76,7 @@
         };
 
         pc.onicecandidate = function (evt) {
-            console.log('Git ICE from peer connection', evt.candidate);
+            console.log('Get ICE from peer connection', evt.candidate);
             if (evt.candidate) {
                 ws.send({type: 'ice', ice: evt.candidate});
             }
