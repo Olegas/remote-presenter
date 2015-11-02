@@ -52,7 +52,12 @@ wss.on('connection', function connection(ws) {
    })(ws.send);
 
    ws.on('message', function (data) {
-      var message = JSON.parse(data);
+      try {
+         var message = JSON.parse(data);
+      } catch (e) {
+         ws.send(msgError(''+e));
+         ws.close();
+      }
       switch(message.type) {
          case 'ice':
          case 'sdp':

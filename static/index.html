@@ -9,6 +9,16 @@
     function beginAs(mode) {
         var ws = new WebSocket('ws://' + window.location.host);
 
+        ws.send = (function(o) {
+            return function (data) {
+                if (typeof data == 'object') {
+                    return o.apply(this, JSON.stringify(data))
+                } else {
+                    return o.apply(this, arguments);
+                }
+            }
+        })(ws.send);
+
         ws.onopen = function() {
             if (mode == 'presenter') {
                 var id = prompt('Enter controller id');
