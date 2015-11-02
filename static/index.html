@@ -10,6 +10,10 @@
 </body>
 <script>
 
+    window.RTCPeerConnection = window.RTCPeerConnection || webkitRTCPeerConnection;
+    window.RTCIceCandidate = window.RTCIceCandidate || webkitRTCIceCandidate;
+    window.RTCSessionDescription = window.RTCSessionDescription || webkitRTCSessionDescription;
+
     function establishRTC(ws, isCaller) {
         var video = document.getElementById('video');
         var remote = document.getElementById('videoRemote');
