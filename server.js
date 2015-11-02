@@ -14,6 +14,7 @@ app.get('/', function (req, res) {
 
 var counterparty = new WeakMap();
 var presentations = new Map();
+var ids = new WeakMap();
 
 function msgError(text) {
    return {
@@ -51,6 +52,15 @@ wss.on('connection', function connection(ws) {
       }
    })(ws.send);
 
+   ws.on('close', function(){
+      var peer = counterparty.get(this);
+      if (peer) {
+         peer.close();
+      }
+      var id = ids.get(this);
+      presentations.delete(id);
+   });
+
    ws.on('message', function (data) {
       try {
          var message = JSON.parse(data);
@@ -73,6 +83,7 @@ wss.on('connection', function connection(ws) {
          case 'presenter':
             if (message.type == 'controller') {
                let id = mkId();
+               ids.set(this, id);
                presentations.set(id, this);
                ws.send(msgId(id))
             } else {
