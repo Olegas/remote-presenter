@@ -14,7 +14,7 @@
 </body>
 <script>
 
-    if (window.location.protocol !== 'https:') {
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
         window.location.protocol = 'https:';
     }
 
@@ -36,6 +36,7 @@
         var rmtIce = [];
 
         function applyIce(pc) {
+            console.log('Applying ICE')
             rmtIce.forEach(function(ice) {
                 pc.addIceCandidate(new RTCIceCandidate(ice));
             });
@@ -52,13 +53,11 @@
         ws.onmessage = function(msg) {
             var m = JSON.parse(msg.data);
             if (m.type == 'ice') {
-                console.log('Got remote ICE', m.ice);
                 if (m.ice) {
                     rmtIce.push(m.ice);
                 }
             } else if (m.type == 'sdp') {
                 var desc = new RTCSessionDescription(m.sdp);
-                console.log('Got SDP', m.sdp);
                 // if we get an offer, we need to reply with an answer
                 if (desc.type == "offer") {
                     console.log('Got offer');
@@ -71,6 +70,7 @@
                         }, alert);
                     }, alert);
                 } else {
+                    console.log('Got remote sdp');
                     pc.setRemoteDescription(desc, null, alert);
                     applyIce(pc);
                 }
@@ -80,13 +80,11 @@
         };
 
         pc.onicecandidate = function (evt) {
-            console.log('Get ICE from peer connection', evt.candidate);
             if (evt.candidate) {
                 ws.send({type: 'ice', ice: evt.candidate});
             }
         };
 
-        // once remote stream arrives, show it in the remote video element
         pc.onaddstream = function (evt) {
             console.log('Got stream');
             remote.src = URL.createObjectURL(evt.stream);
@@ -107,7 +105,7 @@
     }
 
     function beginAs(mode) {
-        var ws = new WebSocket('wss://' + window.location.host);
+        var ws = new WebSocket('wss://presenter-signaling.herokuapp.com/');
 
         ws.send = (function(o) {
             return function (data) {
