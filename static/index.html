@@ -56,7 +56,7 @@
             if (isCaller) {
                 pc.createOffer(gotDescription);
             }  else {
-                pc.createAnswer(pc.remoteDescription, gotDescription);
+                pc.createAnswer(gotDescription, null, pc.remoteDescription);
             }
 
             function gotDescription(desc) {
