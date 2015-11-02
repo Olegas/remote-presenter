@@ -80,7 +80,7 @@ wss.on('connection', function connection(ws) {
                if (controller) {
                   counterparty.set(controller, this);
                   counterparty.set(this, controller);
-                  presentations.remove(message.id);
+                  presentations.delete(message.id);
                   controller.send(msgStartSession());
                   this.send(msgStartSession());
                } else {
