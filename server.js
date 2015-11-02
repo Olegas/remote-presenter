@@ -53,7 +53,7 @@ wss.on('connection', function connection(ws) {
 
    ws.on('message', function (data) {
       try {
-         var message = JSON.parse(data.data);
+         var message = JSON.parse(data);
       } catch (e) {
          ws.send(msgError(''+e));
          ws.close();
