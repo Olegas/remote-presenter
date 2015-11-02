@@ -17,7 +17,7 @@
     function establishRTC(ws, isCaller) {
         var video = document.getElementById('video');
         var remote = document.getElementById('videoRemote');
-        var pc = new RTCPeerConnection();
+        var pc = new RTCPeerConnection({});
 
         ws.onmessage = function(msg) {
             var m = JSON.parse(msg.data);
