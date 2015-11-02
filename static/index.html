@@ -42,7 +42,9 @@
             var m = JSON.parse(msg.data);
             if (m.type == 'ice') {
                 console.log('Got remote ICE', m.ice);
-                pc.addIceCandidate(new RTCIceCandidate(m.ice));
+                if (m.ice) {
+                    pc.addIceCandidate(new RTCIceCandidate(m.ice));
+                }
             } else if (m.type == 'sdp') {
                 var desc = new RTCSessionDescription(m.sdp);
                 console.log('Got SDP', m.sdp);
@@ -66,7 +68,9 @@
 
         pc.onicecandidate = function (evt) {
             console.log('Git ICE from peer connection', evt.candidate);
-            ws.send({ type: 'ice', ice: evt.candidate });
+            if (evt.candidate) {
+                ws.send({type: 'ice', ice: evt.candidate});
+            }
         };
 
         // once remote stream arrives, show it in the remote video element
