@@ -41,6 +41,16 @@ function msgStartSession() {
 
 wss.on('connection', function connection(ws) {
 
+   ws.send = (function(o) {
+      return function (data) {
+         if (typeof data == 'object') {
+            return o.apply(this, JSON.stringify(data))
+         } else {
+            return o.apply(this, arguments);
+         }
+      }
+   })(ws.send);
+
    ws.on('message', function (data) {
       var message = JSON.parse(data);
       switch(message.type) {
