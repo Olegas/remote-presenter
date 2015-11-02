@@ -10,6 +10,10 @@
 </body>
 <script>
 
+    if (window.location.protocol !== 'https:') {
+        window.location.protocol = 'https:';
+    }
+
     window.RTCPeerConnection = window.RTCPeerConnection || webkitRTCPeerConnection;
     window.RTCIceCandidate = window.RTCIceCandidate || webkitRTCIceCandidate;
     window.RTCSessionDescription = window.RTCSessionDescription || webkitRTCSessionDescription;
@@ -69,7 +73,7 @@
     }
 
     function beginAs(mode) {
-        var ws = new WebSocket('ws://' + window.location.host);
+        var ws = new WebSocket('wss://' + window.location.host);
 
         ws.send = (function(o) {
             return function (data) {
