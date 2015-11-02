@@ -41,7 +41,7 @@
             pc.createOffer(function (offer) {
                 pc.setLocalDescription(offer);
                 console.log('Sending offer', pc.localDescription);
-                ws.send({ type: 'dsp', 'sdp': pc.localDescription });
+                ws.send({ type: 'sdp', 'sdp': pc.localDescription });
             }, alert);
         };
 
