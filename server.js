@@ -12,6 +12,10 @@ app.get('/', function (req, res) {
    res.sendfile(path.join(__dirname, 'static/index.html'));
 });
 
+app.get('/presenter.js', function(req, res) {
+   res.sendFile(path.join(__dirname, 'static/presenter.js'));
+});
+
 var counterparty = new WeakMap();
 var presentations = new Map();
 var ids = new WeakMap();
@@ -24,7 +28,7 @@ function msgError(text) {
 }
 
 function mkId() {
-   return Math.random().toString(36).substr(2, 6)
+   return Math.random().toString(36).substr(2, 6).toUpperCase();
 }
 
 function msgId(id) {

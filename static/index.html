@@ -1,6 +1,7 @@
+<script src="presenter.js"></script>
 <body>
-    <button class="begin" id="presenter">Presenter</button>
-    <button class="begin" id="controller">Controller</button>
+    <button class="begin" id="present">Presenter</button>
+    <button class="begin" id="control">Controller</button>
 
     <div id="id"></div>
     <div style="float: left">
@@ -18,125 +19,36 @@
         window.location.protocol = 'https:';
     }
 
-    window.RTCPeerConnection = window.RTCPeerConnection || webkitRTCPeerConnection;
-    window.RTCIceCandidate = window.RTCIceCandidate || webkitRTCIceCandidate;
-    window.RTCSessionDescription = window.RTCSessionDescription || webkitRTCSessionDescription;
-    navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia || navigator.msGetUserMedia;
+    var video = document.getElementById('video');
+    var videoRemote = document.getElementById('videoRemote');
 
+    Presenter.onlocalstream = function(stream) {
+        video.src = URL.createObjectURL(stream);
+    };
 
-    function establishRTC(ws, isCaller) {
-        var video = document.getElementById('video');
-        var remote = document.getElementById('videoRemote');
-        var pc = new RTCPeerConnection({
-            iceServers: [{
-                'url': 'stun:stun.l.google.com:19302'
-            }]
-        });
+    Presenter.onremotestream = function(stream) {
+        videoRemote.src = URL.createObjectURL(stream);
+    };
 
-        function negotiate() {
+    Presenter.onidreceived = function(id) {
+        document.getElementById('id').appendChild(document.createTextNode(id));
+    };
 
-            pc.createOffer(function (offer) {
-                pc.setLocalDescription(offer);
-                console.log('Sending offer', pc.localDescription);
-                ws.send({ type: 'sdp', 'sdp': pc.localDescription });
-            }, alert);
-        }
+    Presenter.onremotecommand = console.log.bind(console);
 
-        ws.onmessage = function(msg) {
-            var m = JSON.parse(msg.data);
-            if (m.type == 'ice') {
-                if (m.ice) {
-                    pc.addIceCandidate(new RTCIceCandidate(m.ice));
-                }
-            } else if (m.type == 'sdp') {
-                var desc = new RTCSessionDescription(m.sdp);
-                // if we get an offer, we need to reply with an answer
-                if (desc.type == "offer") {
-                    console.log('Got offer');
-                    pc.setRemoteDescription(desc, function () {
-                        console.log('done applying offer');
-                        pc.createAnswer(function(ans){
-                            console.log('answer ready');
-                            pc.setLocalDescription(ans);
-                            console.log('Sending answer', pc.localDescription);
-                            ws.send({ type: 'sdp', 'sdp': pc.localDescription });
-                        }, function(err){
-                            console.log(err);
-                        });
-                    }, function(err){
-                        console.log(err);
-                    });
-                } else {
-                    console.log('Got remote sdp');
-                    pc.setRemoteDescription(desc, null, alert);
-                }
-            } else if (m.type == 'error') {
-                alert('Error: ' + m.message);
-            }
-        };
-
-        pc.onicecandidate = function (evt) {
-            if (evt.candidate) {
-                ws.send({type: 'ice', ice: evt.candidate});
-            }
-        };
-
-        pc.onaddstream = function (evt) {
-            console.log('Got stream');
-            remote.src = URL.createObjectURL(evt.stream);
-        };
-
-        navigator.getUserMedia({ video: true, audio: true }, function gumSuccess(stream){
-            if (URL.createObjectURL) {
-                video.src = URL.createObjectURL(stream);
-            } else {
-                video.src = stream;
-            }
-            pc.addStream(stream);
-            if (isCaller) {
-                negotiate();
-            }
-        }, function gumError(e){
-            alert('getUserMedia error: ' + e);
-        })
-    }
-
-    function beginAs(mode) {
-        var ws = new WebSocket('wss://presenter-signaling.herokuapp.com/');
-
-        ws.send = (function(o) {
-            return function (data) {
-                if (typeof data == 'object') {
-                    return o.call(this, JSON.stringify(data))
-                } else {
-                    return o.apply(this, arguments);
-                }
-            }
-        })(ws.send);
-
-        ws.onopen = function() {
-            if (mode == 'presenter') {
-                var id = prompt('Enter controller id');
-                ws.send({ type: mode, id: id });
-            } else {
-                ws.send({type: mode});
-            }
-            ws.onmessage = function(msg) {
-                var m = JSON.parse(msg.data);
-                if (m.type == 'id') {
-                    document.getElementById('id').appendChild(document.createTextNode(m.id));
-                } else if (m.type == 'startSession') {
-                    establishRTC(this, mode == 'controller');
-                } else if (m.type == 'error') {
-                    alert('Error: ' + m.message);
-                }
-            }
-        }
-    }
+    Presenter.onerror = alert;
 
     document.body.addEventListener('click', function(e){
         if (e.target.className == 'begin') {
-            beginAs(e.target.id);
+            var mode = e.target.id;
+            if (mode == 'present') {
+                Presenter.present(prompt('Enter controller ID'));
+            } else {
+                var transmit = Presenter.control();
+                setInterval(function(){
+                    transmit(Date.now())
+                }, 1000);
+            }
             var btns = document.body.getElementsByTagName('button');
             for(var i = 0, l = btns.length; i < l; i++) {
                 btns[i].disabled = true;
