@@ -81,6 +81,9 @@
             } else {
                 video.src = stream;
             }
+            if (isCaller) {
+                pc.addStream(stream);
+            }
         }, function gumError(e){
             alert('getUserMedia error: ' + e);
         })
