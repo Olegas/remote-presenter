@@ -33,13 +33,14 @@
             }]
         });
 
-        pc.onnegotiationneeded = function() {
+        function negotiate() {
+
             pc.createOffer(function (offer) {
                 pc.setLocalDescription(offer);
                 console.log('Sending offer', pc.localDescription);
                 ws.send({ type: 'sdp', 'sdp': pc.localDescription });
             }, alert);
-        };
+        }
 
         ws.onmessage = function(msg) {
             var m = JSON.parse(msg.data);
@@ -92,6 +93,9 @@
                 video.src = stream;
             }
             pc.addStream(stream);
+            if (isCaller) {
+                negotiate();
+            }
         }, function gumError(e){
             alert('getUserMedia error: ' + e);
         })
